@@ -1,19 +1,19 @@
 import CoreGraphics
 import Foundation
 
-public enum NodeType: String, Codable, Sendable {
+enum NodeType: String, Codable, Sendable {
     case corner
     case smooth
 }
 
-public struct Node: Equatable, Codable, Sendable {
-    public var anchor: CGPoint
+struct Node: Equatable, Codable, Sendable {
+    var anchor: CGPoint
     // Handles are absolute control points; nil means a straight side.
-    public var handleIn: CGPoint?
-    public var handleOut: CGPoint?
-    public var type: NodeType
+    var handleIn: CGPoint?
+    var handleOut: CGPoint?
+    var type: NodeType
 
-    public init(anchor: CGPoint,
+    init(anchor: CGPoint,
                 handleIn: CGPoint? = nil,
                 handleOut: CGPoint? = nil,
                 type: NodeType = .corner) {
@@ -23,44 +23,44 @@ public struct Node: Equatable, Codable, Sendable {
         self.type = type
     }
 
-    public init(corner anchor: CGPoint) {
+    init(corner anchor: CGPoint) {
         self.init(anchor: anchor, type: .corner)
     }
 
-    public init(smooth anchor: CGPoint, handleOut: CGPoint) {
+    init(smooth anchor: CGPoint, handleOut: CGPoint) {
         self.init(anchor: anchor,
                   handleIn: anchor * 2 - handleOut,
                   handleOut: handleOut,
                   type: .smooth)
     }
 
-    public func mapped(_ transform: (CGPoint) -> CGPoint) -> Node {
+    func mapped(_ transform: (CGPoint) -> CGPoint) -> Node {
         Node(anchor: transform(anchor),
              handleIn: handleIn.map(transform),
              handleOut: handleOut.map(transform),
              type: type)
     }
 
-    public func translated(by delta: CGPoint) -> Node {
+    func translated(by delta: CGPoint) -> Node {
         mapped { $0 + delta }
     }
 }
 
-public enum HandleSide: Sendable {
+enum HandleSide: Sendable {
     case `in`
     case out
 }
 
-public struct Shape: Equatable, Codable, Sendable {
-    public var nodes: [Node]
-    public var isClosed: Bool
+struct VectorShape: Equatable, Codable, Sendable {
+    var nodes: [Node]
+    var isClosed: Bool
 
-    public init(nodes: [Node] = [], isClosed: Bool = false) {
+    init(nodes: [Node] = [], isClosed: Bool = false) {
         self.nodes = nodes
         self.isClosed = isClosed
     }
 
-    public var isEmpty: Bool { nodes.count < 2 }
+    var isEmpty: Bool { nodes.count < 2 }
 
     // Missing handles default to the segment thirds, so a side stays straight.
     private static func segment(from a: Node, to b: Node) -> CubicSegment {
@@ -70,42 +70,42 @@ public struct Shape: Equatable, Codable, Sendable {
         return CubicSegment(start: a.anchor, control1: c1, control2: c2, end: b.anchor)
     }
 
-    public func bezierPath() -> BezierPath {
+    func bezierPath() -> BezierPath {
         guard nodes.count >= 2 else { return BezierPath() }
         var segments: [CubicSegment] = []
         for i in 0..<(nodes.count - 1) {
-            segments.append(Shape.segment(from: nodes[i], to: nodes[i + 1]))
+            segments.append(VectorShape.segment(from: nodes[i], to: nodes[i + 1]))
         }
         if isClosed, let first = nodes.first, let last = nodes.last {
-            segments.append(Shape.segment(from: last, to: first))
+            segments.append(VectorShape.segment(from: last, to: first))
         }
         return BezierPath(segments: segments, isClosed: isClosed)
     }
 
-    public func cgPath() -> CGPath { bezierPath().cgPath() }
+    func cgPath() -> CGPath { bezierPath().cgPath() }
 
-    public func mapped(_ transform: (CGPoint) -> CGPoint) -> Shape {
-        Shape(nodes: nodes.map { $0.mapped(transform) }, isClosed: isClosed)
+    func mapped(_ transform: (CGPoint) -> CGPoint) -> VectorShape {
+        VectorShape(nodes: nodes.map { $0.mapped(transform) }, isClosed: isClosed)
     }
 
-    public func translated(by delta: CGPoint) -> Shape {
+    func translated(by delta: CGPoint) -> VectorShape {
         mapped { $0 + delta }
     }
 
-    public func snappingAnchors(to grid: Grid) -> Shape {
-        Shape(nodes: nodes.map { node in
+    func snappingAnchors(to grid: Grid) -> VectorShape {
+        VectorShape(nodes: nodes.map { node in
             node.translated(by: grid.snap(node.anchor) - node.anchor)
         }, isClosed: isClosed)
     }
 
-    public func movingNode(_ index: Int, by delta: CGPoint) -> Shape {
+    func movingNode(_ index: Int, by delta: CGPoint) -> VectorShape {
         guard nodes.indices.contains(index) else { return self }
         var copy = self
         copy.nodes[index] = nodes[index].translated(by: delta)
         return copy
     }
 
-    public func snappingNode(_ index: Int, to grid: Grid) -> Shape {
+    func snappingNode(_ index: Int, to grid: Grid) -> VectorShape {
         guard nodes.indices.contains(index) else { return self }
         let node = nodes[index]
         var copy = self
@@ -124,7 +124,7 @@ public struct Shape: Equatable, Codable, Sendable {
         }
     }
 
-    public func effectiveHandleOut(_ index: Int) -> CGPoint? {
+    func effectiveHandleOut(_ index: Int) -> CGPoint? {
         guard nodes.indices.contains(index) else { return nil }
         if let h = nodes[index].handleOut { return h }
         guard let next = neighbor(of: index, after: true) else { return nil }
@@ -132,7 +132,7 @@ public struct Shape: Equatable, Codable, Sendable {
         return a + (nodes[next].anchor - a) * (1.0 / 3.0)
     }
 
-    public func effectiveHandleIn(_ index: Int) -> CGPoint? {
+    func effectiveHandleIn(_ index: Int) -> CGPoint? {
         guard nodes.indices.contains(index) else { return nil }
         if let h = nodes[index].handleIn { return h }
         guard let prev = neighbor(of: index, after: false) else { return nil }
@@ -140,7 +140,7 @@ public struct Shape: Equatable, Codable, Sendable {
         return a + (nodes[prev].anchor - a) * (1.0 / 3.0)
     }
 
-    public func movingHandle(_ index: Int, side: HandleSide, to point: CGPoint) -> Shape {
+    func movingHandle(_ index: Int, side: HandleSide, to point: CGPoint) -> VectorShape {
         guard nodes.indices.contains(index) else { return self }
         var node = nodes[index]
         switch side {
@@ -159,13 +159,13 @@ public struct Shape: Equatable, Codable, Sendable {
         return copy
     }
 
-    public func snappingHandle(_ index: Int, side: HandleSide, to grid: Grid) -> Shape {
+    func snappingHandle(_ index: Int, side: HandleSide, to grid: Grid) -> VectorShape {
         let current = side == .in ? effectiveHandleIn(index) : effectiveHandleOut(index)
         guard let current else { return self }
         return movingHandle(index, side: side, to: grid.snap(current))
     }
 
-    public var anchorBounds: CGRect {
+    var anchorBounds: CGRect {
         guard let first = nodes.first?.anchor else { return .zero }
         var minX = first.x, minY = first.y, maxX = first.x, maxY = first.y
         for node in nodes.dropFirst() {
@@ -178,7 +178,7 @@ public struct Shape: Equatable, Codable, Sendable {
     // Kappa: cubic Bézier approximation of a quarter circle (max error ~0.02%).
     static let kappa: CGFloat = 0.5522847498307936
 
-    public static func rectangle(center: CGPoint, width: CGFloat, height: CGFloat) -> Shape {
+    static func rectangle(center: CGPoint, width: CGFloat, height: CGFloat) -> VectorShape {
         let hw = width / 2, hh = height / 2
         let corners = [
             CGPoint(x: center.x - hw, y: center.y - hh),
@@ -186,15 +186,15 @@ public struct Shape: Equatable, Codable, Sendable {
             CGPoint(x: center.x + hw, y: center.y + hh),
             CGPoint(x: center.x - hw, y: center.y + hh),
         ]
-        return Shape(nodes: corners.map(Node.init(corner:)), isClosed: true)
+        return VectorShape(nodes: corners.map(Node.init(corner:)), isClosed: true)
     }
 
-    public static func square(center: CGPoint, side: CGFloat) -> Shape {
+    static func square(center: CGPoint, side: CGFloat) -> VectorShape {
         rectangle(center: center, width: side, height: side)
     }
 
-    public static func ellipse(center: CGPoint, semiMajor a: CGFloat, semiMinor b: CGFloat) -> Shape {
-        let k = Shape.kappa
+    static func ellipse(center: CGPoint, semiMajor a: CGFloat, semiMinor b: CGFloat) -> VectorShape {
+        let k = VectorShape.kappa
         let specs: [(CGPoint, CGPoint)] = [
             (CGPoint(x: a, y: 0),  CGPoint(x: a, y: k * b)),
             (CGPoint(x: 0, y: b),  CGPoint(x: -k * a, y: b)),
@@ -204,27 +204,27 @@ public struct Shape: Equatable, Codable, Sendable {
         let nodes = specs.map { anchor, handleOut in
             Node(smooth: anchor + center, handleOut: handleOut + center)
         }
-        return Shape(nodes: nodes, isClosed: true)
+        return VectorShape(nodes: nodes, isClosed: true)
     }
 
-    public static func circle(center: CGPoint, radius: CGFloat) -> Shape {
+    static func circle(center: CGPoint, radius: CGFloat) -> VectorShape {
         ellipse(center: center, semiMajor: radius, semiMinor: radius)
     }
 
-    public static func regularPolygon(center: CGPoint,
+    static func regularPolygon(center: CGPoint,
                                       circumradius r: CGFloat,
                                       sides: Int,
-                                      rotation: CGFloat = 0) -> Shape {
-        guard sides >= 3 else { return Shape() }
+                                      rotation: CGFloat = 0) -> VectorShape {
+        guard sides >= 3 else { return VectorShape() }
         let nodes = (0..<sides).map { i -> Node in
             let angle = rotation + 2 * .pi * CGFloat(i) / CGFloat(sides)
             return Node(corner: CGPoint(x: center.x + r * Foundation.cos(angle),
                                         y: center.y + r * Foundation.sin(angle)))
         }
-        return Shape(nodes: nodes, isClosed: true)
+        return VectorShape(nodes: nodes, isClosed: true)
     }
 
-    public static func triangle(center: CGPoint, size: CGFloat) -> Shape {
+    static func triangle(center: CGPoint, size: CGFloat) -> VectorShape {
         regularPolygon(center: center, circumradius: size, sides: 3, rotation: -.pi / 2)
     }
 }

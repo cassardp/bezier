@@ -1,17 +1,17 @@
 import CoreGraphics
 import Foundation
 
-public struct Grid: Equatable, Sendable {
+struct Grid: Equatable, Sendable {
 
-    public var step: CGFloat
-    public var origin: CGPoint
+    var step: CGFloat
+    var origin: CGPoint
 
-    public init(step: CGFloat, origin: CGPoint = .zero) {
+    init(step: CGFloat, origin: CGPoint = .zero) {
         self.step = max(step, 1e-6)
         self.origin = origin
     }
 
-    public func snap(_ p: CGPoint) -> CGPoint {
+    func snap(_ p: CGPoint) -> CGPoint {
         CGPoint(x: snap(p.x, base: origin.x),
                 y: snap(p.y, base: origin.y))
     }

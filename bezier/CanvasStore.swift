@@ -1,4 +1,3 @@
-import BezierCore
 import CoreGraphics
 import Observation
 
@@ -29,11 +28,11 @@ enum ShapeKind: String, CaseIterable, Identifiable {
         }
     }
 
-    func makeShape(center: CGPoint, span: CGFloat) -> Shape {
+    func makeShape(center: CGPoint, span: CGFloat) -> VectorShape {
         switch self {
-        case .square:   Shape.square(center: center, side: span)
-        case .circle:   Shape.circle(center: center, radius: span / 2)
-        case .triangle: Shape.triangle(center: center, size: span / 2)
+        case .square:   VectorShape.square(center: center, side: span)
+        case .circle:   VectorShape.circle(center: center, radius: span / 2)
+        case .triangle: VectorShape.triangle(center: center, size: span / 2)
         }
     }
 }
@@ -43,13 +42,13 @@ enum ShapeKind: String, CaseIterable, Identifiable {
 final class CanvasStore {
     var viewport = Viewport()
     var tool: Tool = .select
-    var shapes: [Shape] = []
+    var shapes: [VectorShape] = []
     var selectedIndex: Int?
     var activeNodeIndex: Int?
     var gridStep: CGFloat = 50
     var grid: Grid { Grid(step: gridStep) }
 
-    var selectedShape: Shape? {
+    var selectedShape: VectorShape? {
         guard let i = selectedIndex, shapes.indices.contains(i) else { return nil }
         return shapes[i]
     }
@@ -86,7 +85,7 @@ final class CanvasStore {
         selectedIndex = nil
     }
 
-    func updateSelected(_ shape: Shape) {
+    func updateSelected(_ shape: VectorShape) {
         guard let i = selectedIndex, shapes.indices.contains(i) else { return }
         shapes[i] = shape
     }

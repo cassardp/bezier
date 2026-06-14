@@ -18,30 +18,32 @@ publiable App Store.
   courts. Le code doit se lire seul (noms explicites).
 - Commits conventionnels : `type: description` (`feat`, `fix`, `refactor`…).
 - Avant toute édition SwiftUI/iOS : invoquer les skills `all-ios-skills:*`
-  pertinents (cf. config globale). Le core géométrique (`BezierCore`) est du
-  Swift pur, hors de cette règle.
+  pertinents (cf. config globale). Le core géométrique (dossier
+  `bezier/Geometry/`) est du Swift pur, hors de cette règle.
 
 ## Architecture (couches découplées)
 
 | Couche | Rôle | Où |
 |---|---|---|
-| **Géométrie** | `Shape` (modèle éditable), `BezierPath` (rendu), `Grid`, `Viewport` | `BezierCore` — Swift pur, **zéro UIKit**, 100 % testé |
+| **Géométrie** | `VectorShape` (modèle éditable), `BezierPath` (rendu), `Grid`, `Viewport` | `bezier/Geometry/` — Swift pur, **zéro UIKit** (n'importe que `CoreGraphics`/`Foundation`) |
 | **État** | caméra, outil, formes, sélection | `CanvasStore` (`@Observable`, `@MainActor`) |
 | **UI / interaction** | rendu Canvas, gestes, toolbar | `InfiniteCanvasView` (SwiftUI) |
 
-### Modèle clé : `Shape` est centré sur les nœuds
-Un `Shape` est une suite de `Node` (ancre + deux poignées de tangente absolues
-optionnelles + type `corner`/`smooth`), optionnellement fermé. Bouger un sommet,
-courber un côté, aimanter sont des opérations **locales** (pas de duplication
-d'ancre entre segments). Le rendu passe par `Shape.bezierPath()` qui aplatit en
+### Modèle clé : `VectorShape` est centré sur les nœuds
+Un `VectorShape` est une suite de `Node` (ancre + deux poignées de tangente
+absolues optionnelles + type `corner`/`smooth`), optionnellement fermé. Bouger un
+sommet, courber un côté, aimanter sont des opérations **locales** (pas de
+duplication d'ancre entre segments). Le rendu passe par `VectorShape.bezierPath()`
+qui aplatit en
 `CubicSegment` → `cgPath()`. Une poignée à `nil` = côté droit (contrôle implicite
 au tiers, exposé par `effectiveHandleIn/Out`), donc **tout côté est courbable**,
 même sur un polygone à coins francs.
 
 ### Fichiers
-- `BezierCore/Sources/BezierCore/` : `Shape.swift` (cœur), `BezierPath.swift`
+Tout est dans une seule cible app (`bezier`). Pas de package séparé.
+- `bezier/Geometry/` (Swift pur) : `VectorShape.swift` (cœur), `BezierPath.swift`
   (conteneur de rendu), `Grid.swift` (aimantation), `Viewport.swift`
-  (monde↔écran), `Vector2.swift` (`+ - *` sur `CGPoint`).
+  (monde↔écran), `CGPoint+Math.swift` (`+ - *` sur `CGPoint`).
 - `bezier/` : `CanvasStore.swift`, `InfiniteCanvasView.swift`, `ContentView.swift`,
   `bezierApp.swift`.
 
@@ -57,19 +59,14 @@ même sur un polygone à coins francs.
 
 Priorité de saisie : tangente du nœud actif → n'importe quel nœud → corps → vide.
 
-## Build & test
+## Build
 ```sh
-# Tests du moteur géométrique (rapide, sans simulateur)
-cd BezierCore && swift test
-
-# Build app simulateur
 xcodebuild -project bezier.xcodeproj -scheme bezier \
   -destination 'generic/platform=iOS Simulator' -configuration Debug build
 ```
 Le projet Xcode utilise des **groupes synchronisés** : ajouter/retirer un fichier
-sous `bezier/` ou `BezierCore/` ne nécessite pas d'éditer le `.pbxproj`.
-
-⚠️ Le dossier n'est **pas un dépôt git** → les suppressions sont définitives.
+sous `bezier/` (y compris `bezier/Geometry/`) ne nécessite pas d'éditer le
+`.pbxproj`. Pas de suite de tests (choix assumé : vélocité solo).
 
 ## Suite envisagée
 - Poignées d'**arête** (pousser un segment = agrandir H/L) et de **bounding-box**

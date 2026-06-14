@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		BC0000000000000000000003 /* BezierCore in Frameworks */ = {isa = PBXBuildFile; productRef = BC0000000000000000000002 /* BezierCore */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		4EDDFAE62FDD905000D5958B /* bezier.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = bezier.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -27,7 +23,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BC0000000000000000000003 /* BezierCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,9 +64,6 @@
 				4EDDFAE82FDD905000D5958B /* bezier */,
 			);
 			name = bezier;
-			packageProductDependencies = (
-				BC0000000000000000000002 /* BezierCore */,
-			);
 			productName = bezier;
 			productReference = 4EDDFAE62FDD905000D5958B /* bezier.app */;
 			productType = "com.apple.product-type.application";
@@ -100,9 +92,6 @@
 			);
 			mainGroup = 4EDDFADD2FDD905000D5958B;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				BC0000000000000000000001 /* XCLocalSwiftPackageReference "BezierCore" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4EDDFAE72FDD905000D5958B /* Products */;
 			projectDirPath = "";
@@ -341,20 +330,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCLocalSwiftPackageReference section */
-		BC0000000000000000000001 /* XCLocalSwiftPackageReference "BezierCore" */ = {
-			isa = XCLocalSwiftPackageReference;
-			relativePath = BezierCore;
-		};
-/* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		BC0000000000000000000002 /* BezierCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = BezierCore;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4EDDFADE2FDD905000D5958B /* Project object */;
 }

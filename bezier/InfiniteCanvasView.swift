@@ -1,4 +1,3 @@
-import BezierCore
 import SwiftUI
 
 struct InfiniteCanvasView: View {
@@ -10,10 +9,10 @@ struct InfiniteCanvasView: View {
     @State private var viewSize: CGSize = .zero
 
     private enum DragSession {
-        case handle(index: Int, side: BezierCore.HandleSide,
-                    baseHandle: CGPoint, base: BezierCore.Shape)
-        case node(index: Int, base: BezierCore.Shape)
-        case shape(base: BezierCore.Shape)
+        case handle(index: Int, side: HandleSide,
+                    baseHandle: CGPoint, base: VectorShape)
+        case node(index: Int, base: VectorShape)
+        case shape(base: VectorShape)
     }
     @State private var dragSession: DragSession?
 
@@ -126,13 +125,13 @@ struct InfiniteCanvasView: View {
     }
 
     private func nearestHandle(to screenPoint: CGPoint,
-                               in shape: BezierCore.Shape,
+                               in shape: VectorShape,
                                nodes: [Int],
                                within threshold: CGFloat)
-        -> (index: Int, side: BezierCore.HandleSide, world: CGPoint)? {
-        var best: (index: Int, side: BezierCore.HandleSide, world: CGPoint, distance: CGFloat)?
+        -> (index: Int, side: HandleSide, world: CGPoint)? {
+        var best: (index: Int, side: HandleSide, world: CGPoint, distance: CGFloat)?
         for i in nodes {
-            for side in [BezierCore.HandleSide.in, .out] {
+            for side in [HandleSide.in, .out] {
                 let world = side == .in ? shape.effectiveHandleIn(i)
                                         : shape.effectiveHandleOut(i)
                 guard let w = world else { continue }
@@ -148,7 +147,7 @@ struct InfiniteCanvasView: View {
     }
 
     private func nearestAnchor(to screenPoint: CGPoint,
-                               in shape: BezierCore.Shape,
+                               in shape: VectorShape,
                                nodes: [Int],
                                within threshold: CGFloat) -> Int? {
         var best: (index: Int, distance: CGFloat)?

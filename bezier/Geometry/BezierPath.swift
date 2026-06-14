@@ -1,13 +1,13 @@
 import CoreGraphics
 import Foundation
 
-public struct CubicSegment: Equatable, Codable, Sendable {
-    public var start: CGPoint
-    public var control1: CGPoint
-    public var control2: CGPoint
-    public var end: CGPoint
+struct CubicSegment: Equatable, Codable, Sendable {
+    var start: CGPoint
+    var control1: CGPoint
+    var control2: CGPoint
+    var end: CGPoint
 
-    public init(start: CGPoint, control1: CGPoint, control2: CGPoint, end: CGPoint) {
+    init(start: CGPoint, control1: CGPoint, control2: CGPoint, end: CGPoint) {
         self.start = start
         self.control1 = control1
         self.control2 = control2
@@ -15,18 +15,18 @@ public struct CubicSegment: Equatable, Codable, Sendable {
     }
 }
 
-public struct BezierPath: Equatable, Codable, Sendable {
-    public var segments: [CubicSegment]
-    public var isClosed: Bool
+struct BezierPath: Equatable, Codable, Sendable {
+    var segments: [CubicSegment]
+    var isClosed: Bool
 
-    public init(segments: [CubicSegment] = [], isClosed: Bool = false) {
+    init(segments: [CubicSegment] = [], isClosed: Bool = false) {
         self.segments = segments
         self.isClosed = isClosed
     }
 
-    public var isEmpty: Bool { segments.isEmpty }
+    var isEmpty: Bool { segments.isEmpty }
 
-    public func cgPath() -> CGPath {
+    func cgPath() -> CGPath {
         let path = CGMutablePath()
         guard let first = segments.first else { return path }
         path.move(to: first.start)
